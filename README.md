@@ -1,4 +1,4 @@
-### Cloud Five Push for Android
+# Cloud Five Push for Android
 
 ## Quick Start
 
@@ -20,9 +20,9 @@ and add the project to your `settings.gradle` file as well:
     include ':app', ':cloudfivepush'
 
 
-# Configuration
+## Configuration
 
-In either `Application.onCreate` or your launch `Activity.onCreate`, you need to configure Push with your GCM Sender ID (This is the project number found on the (https://console.developers.google.com)[Google API Console])
+In either `Application.onCreate` or your launch `Activity.onCreate`, you need to configure Push with your GCM Sender ID (This is the project number found on the [Google API Console](https://console.developers.google.com)
 
     @Override
     public void onCreate() {
@@ -42,6 +42,6 @@ Then, register to receive push notifications:
 
 That's it!  Now you can send basic push notifications which will create a notification icon in the title bar and launch your app and optionally show an alert dialog when tapped.
 
-# Advanced Configuration
+## Advanced Configuration
 
 * coming soon
