@@ -1,4 +1,19 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.1.2'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.0'
+        classpath 'com.github.dcendents:android-maven-plugin:1.2'
+    }
+}
+
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+version = "0.9"
 
 android {
     compileSdkVersion 21
@@ -8,7 +23,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 21
         versionCode 1
-        versionName "1.0"
+        versionName version
     }
     buildTypes {
         release {
@@ -16,10 +31,105 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    lintOptions {
+      abortOnError false
+    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile "com.android.support:support-v4:22.0.0"
     compile 'com.android.support:appcompat-v7:22.0.0'
     compile "com.google.android.gms:play-services:3.1.+"
+}
+
+
+def siteUrl = 'https://github.com/cloudfive/push-android'      // Homepage URL of the library
+def gitUrl = 'https://github.com/cloudfive/push-android.git'   // Git repository URL
+group = "com.cloudfiveapp"                                // Maven Group ID for the artifact
+
+install {
+    repositories.mavenInstaller {
+      // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+
+                // Add your description here
+                name 'Android client for push notifications from cloudfiveapp.com'
+                url siteUrl
+
+                // Set your license
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id 'brian'
+                        name 'Brian Samson'
+                        email 'brian@cloudfiveapp.com'
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def bintrayUser = properties.getProperty('bintrayUser')
+def bintrayKey = properties.getProperty('bintrayKey')
+
+bintray {
+    user = bintrayUser
+    key = bintrayKey
+
+    configurations = ['archives']
+    dryRun = false //Whether to run this as dry-run, without deploying
+    publish = true //If version should be auto published after an upload
+
+    pkg {
+        repo = 'maven'
+        name = 'cloudfivepush'
+        desc = 'Android client library for push notifications via cloudfiveapp.com'
+        websiteUrl = 'https://github.com/cloudfive/push-android'
+        issueTrackerUrl = 'https://github.com/cloudfive/push-android/issues'
+        vcsUrl = 'https://github.com/cloudfive/push-android.git'
+        licenses = ['MIT']
+        labels = ['gcm', 'push', 'push notifications']
+        publicDownloadNumbers = true
+
+    }
 }

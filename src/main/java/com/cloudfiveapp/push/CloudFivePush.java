@@ -69,6 +69,10 @@ public  class CloudFivePush  {
         instance.pushMessageReceiver = pushMessageReceiver;
     }
 
+    public static void configure(Context context, String gcmSenderId) {
+        configure(context, gcmSenderId, null);
+    }
+
     /**
      * Disable the default notification handling behavior.  This will suppress the Notification, alerts, etc.
      * If you disable the default handlers, be sure to provide a PushMessageReciever to {@code configure}
@@ -99,6 +103,10 @@ public  class CloudFivePush  {
     public static void register(String userIdentifier) {
         getInstance().userIdentifier = userIdentifier;
         getInstance().registerForRemoteNotifications();
+    }
+
+    public static void register() {
+        register(null);
     }
 
     protected void onPushNotificationReceived(Intent intent) {
