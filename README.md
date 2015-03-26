@@ -2,23 +2,32 @@
 
 ## Quick Start
 
-*These instructions will change rapidly as we move toward hosting on Maven.
+### Using Gradle and Android Studio
 
-Inside your main project directory, simply clone the repo:
+Add the following repository to your main build.gradle:
 
-    git clone https://github.com/cloudfive/push-android.git cloudfivepush
-
-Then add the library to your `build.gradle` file:
-
-    dependencies {
-        compile project(":cloudfivepush")
+    allprojects {
+        repositories {
+            jcenter()
+            maven {
+                url  "http://dl.bintray.com/cloudfive/maven"
+            }
+        }
     }
 
+Add this dependency to your app's build.gradle:
 
-and add the project to your `settings.gradle` file as well:
+    dependencies {
+        compile 'com.cloudfiveapp:push-android:0.9.3'
+    }
 
-    include ':app', ':cloudfivepush'
+### Ant/Other builds
 
+You can download the AAR file from [the bintray project page](https://bintray.com/cloudfive/maven/push-android/)
+
+Or download the AAR file directly:
+
+[Latest build (0.9.3)](https://bintray.com/artifact/download/cloudfive/maven/com/cloudfiveapp/push-android/0.9.3/push-android-0.9.3.aar)
 
 ## Configuration
 

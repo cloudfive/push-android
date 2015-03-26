@@ -13,7 +13,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
-version = "0.9.2"
+version = "0.9.3"
 
 android {
     compileSdkVersion 21
@@ -121,7 +121,7 @@ bintray {
 
     pkg {
         repo = 'maven'
-        name = 'cloudfivepush'
+        name = 'push-android'
         desc = 'Android client library for push notifications via cloudfiveapp.com'
         websiteUrl = 'https://github.com/cloudfive/push-android'
         issueTrackerUrl = 'https://github.com/cloudfive/push-android/issues'
