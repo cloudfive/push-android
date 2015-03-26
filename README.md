@@ -4,21 +4,19 @@
 
 ### Using Gradle and Android Studio
 
-Add the following repository to your main build.gradle:
+
+It's easy, just add this dependency to your app's build.gradle:
+
+    dependencies {
+        compile 'com.cloudfiveapp:push-android:0.9.3'
+    }
+
+Cloud Five is hosted on the jcenter repository which is included in new android projects by default. You can verify this by looking at your main build.gradle:
 
     allprojects {
         repositories {
             jcenter()
-            maven {
-                url  "http://dl.bintray.com/cloudfive/maven"
-            }
         }
-    }
-
-Add this dependency to your app's build.gradle:
-
-    dependencies {
-        compile 'com.cloudfiveapp:push-android:0.9.3'
     }
 
 ### Ant/Other builds
