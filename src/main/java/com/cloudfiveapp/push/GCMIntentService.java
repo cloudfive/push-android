@@ -55,9 +55,16 @@ public class GCMIntentService extends IntentService {
 
         String message = extras.getString("message");
         String alert = extras.getString("alert");
+        if (message == null && alert == null) {
+            return;
+        }
         if (message == null) {
             message = alert;
             alert = GCMIntentService.getAppName(this);
+        }
+
+        if (alert == null) {
+           alert = GCMIntentService.getAppName(this);
         }
 
         Notification.Builder mBuilder =
