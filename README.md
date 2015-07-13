@@ -8,7 +8,7 @@
 It's easy, just add this dependency to your app's build.gradle:
 
     dependencies {
-        compile 'com.cloudfiveapp:push-android:0.9.3'
+        compile 'com.cloudfiveapp:push-android:0.9.5'
     }
 
 Cloud Five is hosted on the jcenter repository which is included in new android projects by default. You can verify this by looking at your main build.gradle:
@@ -19,13 +19,18 @@ Cloud Five is hosted on the jcenter repository which is included in new android 
         }
     }
 
+You also need to add a custom GCM permission to your app's AndroidManifest.xml.  Just copy this directly before the `<application>` tag in your app:
+
+    <permission android:name="${applicationId}.permission.C2D_MESSAGE" android:protectionLevel="signature" />
+    <uses-permission android:name="${applicationId}.permission.C2D_MESSAGE" />
+
 ### Ant/Other builds
 
 You can download the AAR file from [the bintray project page](https://bintray.com/cloudfive/maven/push-android/)
 
 Or download the AAR file directly:
 
-[Latest build (0.9.3)](https://bintray.com/artifact/download/cloudfive/maven/com/cloudfiveapp/push-android/0.9.3/push-android-0.9.3.aar)
+[Latest build (0.9.5)](https://bintray.com/artifact/download/cloudfive/maven/com/cloudfiveapp/push-android/0.9.5/push-android-0.9.5.aar)
 
 ## Configuration
 
