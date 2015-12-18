@@ -48,7 +48,7 @@ public class GCMIntentService extends IntentService {
 
         Intent notificationIntent = new Intent(this, PushHandlerActivity.class);
         notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        notificationIntent.putExtra("pushBundle", extras);
+        notificationIntent.putExtra(CloudFivePush.EXTRA_PUSH_BUNDLE, extras);
 
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 

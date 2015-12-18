@@ -26,27 +26,28 @@ public class PushHandlerActivity extends Activity
         Log.v(TAG, "onCreate");
         GCMIntentService.cancelNotification(this);
         Intent intent = getIntent();
-        Bundle pushBundle = intent.getExtras().getBundle("pushBundle");
-        if (pushBundle.containsKey("alert")) {
+        Bundle pushBundle = intent.getExtras().getBundle(CloudFivePush.EXTRA_PUSH_BUNDLE);
+        if (pushBundle.containsKey("message")) {
             showPushAlert(pushBundle);
         } else {
-            transitionToLaunchActivity();
+            transitionToLaunchActivity(pushBundle);
         }
     }
 
-    private void transitionToLaunchActivity() {
+    private void transitionToLaunchActivity(Bundle pushBundle) {
         PackageManager pm = getPackageManager();
         Intent launchActivityIntent = pm.getLaunchIntentForPackage(this.getPackageName());
+        launchActivityIntent.putExtra(CloudFivePush.EXTRA_PUSH_BUNDLE, pushBundle);
         startActivity(launchActivityIntent);
         finish();
     }
 
 
-    public void showPushAlert(Bundle extras) {
+    public void showPushAlert(final Bundle pushBundle) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        String title = extras.getString("alert");
-        String message = extras.getString("message");
+        String title = pushBundle.getString("alert");
+        String message = pushBundle.getString("message");
         if (message == null) {
             message = title;
             PackageManager packageManager = this.getPackageManager();
@@ -62,7 +63,7 @@ public class PushHandlerActivity extends Activity
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     dialog.dismiss();
-                    transitionToLaunchActivity();
+                    transitionToLaunchActivity(pushBundle);
                 }
             });
 

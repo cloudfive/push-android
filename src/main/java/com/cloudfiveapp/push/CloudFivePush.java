@@ -38,6 +38,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 public  class CloudFivePush  {
     public static final String TAG = "CloudFivePush";
+    public static final String EXTRA_PUSH_BUNDLE = "pushBundle";
 
     private static CloudFivePush instance;
     private CloudFivePush() {}
@@ -138,6 +139,14 @@ public  class CloudFivePush  {
 
             if (registrationId.isEmpty()) {
                 registerInBackground();
+            } else {
+                new AsyncTask() {
+                    @Override
+                    protected Object doInBackground(Object[] params) {
+                        notifyCloudFive();
+                        return null;
+                    }
+                }.execute();
             }
         } else {
             Log.w(TAG, "No valid Google Play Services APK found -- push notifications will not be enabled");
