@@ -2,10 +2,11 @@ buildscript {
     repositories {
         jcenter()
     }
+
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.1.2'
+        classpath 'com.android.tools.build:gradle:2.1.2'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.0'
-        classpath 'com.github.dcendents:android-maven-plugin:1.2'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.3'
     }
 }
 
@@ -13,34 +14,38 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
-version = "0.9.6"
+version = "0.9.7"
 
 android {
-    compileSdkVersion 21
+    compileSdkVersion 24
     buildToolsVersion "21.1.2"
+    // Ideally, we would re-write CloudFivePush to use a newer HTTP library.
+    useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 21
+        targetSdkVersion 24
         versionCode 1
         versionName version
     }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
     lintOptions {
-      abortOnError false
+        abortOnError false
     }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile "com.android.support:support-v4:22.0.0"
-    compile 'com.android.support:appcompat-v7:22.0.0'
-    compile 'com.google.android.gms:play-services:4.3.+'
+    compile 'com.android.support:support-v4:24.0.0'
+    compile 'com.android.support:appcompat-v7:24.0.0'
+    compile 'com.google.android.gms:play-services-gcm:9.2.1'
 }
 
 def siteUrl = 'https://github.com/cloudfive/push-android'      // Homepage URL of the library
@@ -49,7 +54,7 @@ group = "com.cloudfiveapp"                                // Maven Group ID for 
 
 install {
     repositories.mavenInstaller {
-      // This generates POM.xml with proper parameters
+        // This generates POM.xml with proper parameters
         pom {
             project {
                 packaging 'aar'
@@ -65,6 +70,7 @@ install {
                         url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                     }
                 }
+
                 developers {
                     developer {
                         id 'brian'
@@ -72,6 +78,7 @@ install {
                         email 'brian@cloudfiveapp.com'
                     }
                 }
+
                 scm {
                     connection gitUrl
                     developerConnection gitUrl
@@ -81,9 +88,6 @@ install {
             }
         }
     }
-}
-
-dependencies {
 }
 
 task sourcesJar(type: Jar) {
@@ -100,11 +104,11 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
 }
+
 artifacts {
     archives javadocJar
     archives sourcesJar
 }
-
 
 Properties properties = new Properties()
 properties.load(project.rootProject.file('local.properties').newDataInputStream())
@@ -129,6 +133,5 @@ bintray {
         licenses = ['MIT']
         labels = ['gcm', 'push', 'push notifications']
         publicDownloadNumbers = true
-
     }
 }
