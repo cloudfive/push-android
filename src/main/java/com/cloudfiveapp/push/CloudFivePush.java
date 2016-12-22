@@ -106,8 +106,17 @@ public  class CloudFivePush  {
         getInstance().registerForRemoteNotifications();
     }
 
+    public static void unregister(String userIdentifier) {
+        getInstance().userIdentifier = userIdentifier;
+        getInstance().unregisterForRemoteNotifications();
+    }
+
     public static void register() {
         register(null);
+    }
+
+    public static void unregister() {
+        unregister(null);
     }
 
     protected void onPushNotificationReceived(Intent intent) {
@@ -144,6 +153,27 @@ public  class CloudFivePush  {
                     @Override
                     protected Object doInBackground(Object[] params) {
                         notifyCloudFive();
+                        return null;
+                    }
+                }.execute();
+            }
+        } else {
+            Log.w(TAG, "No valid Google Play Services APK found -- push notifications will not be enabled");
+        }
+    }
+
+    private void unregisterForRemoteNotifications() {
+        if (checkPlayServices()) {
+            gcm = GoogleCloudMessaging.getInstance(applicationContext);
+            registrationId = getRegistrationId();
+
+            if (registrationId.isEmpty()) {
+                // registerInBackground();
+            } else {
+                new AsyncTask() {
+                    @Override
+                    protected Object doInBackground(Object[] params) {
+                        unregisterCloudFive();
                         return null;
                     }
                 }.execute();
@@ -303,6 +333,46 @@ public  class CloudFivePush  {
         } catch (IOException e) {
             // TODO Auto-generated catch block
             Log.w(TAG, "Unable to register with cloud five: " + e.getMessage());
+            e.printStackTrace();
+
+        }
+    }
+
+    private void unregisterCloudFive() {
+        HttpClient httpclient = new DefaultHttpClient();
+        Log.i("CloudFivePush", "unregistering for push notification with registrationId: " + registrationId + " and userIdentifier: " + userIdentifier);
+        HttpPost httppost = new HttpPost("https://www.cloudfiveapp.com/push/unregister");
+
+        try {
+            // Add your data
+            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+            //:device_token, :device_model, :device_name, :device_version, :app_version
+            nameValuePairs.add(new BasicNameValuePair("device_token", registrationId));
+            nameValuePairs.add(new BasicNameValuePair("package_name", applicationContext.getPackageName() ));
+            nameValuePairs.add(new BasicNameValuePair("device_model", android.os.Build.MODEL));
+            nameValuePairs.add(new BasicNameValuePair("device_name", android.os.Build.DISPLAY));
+            nameValuePairs.add(new BasicNameValuePair("device_version", android.os.Build.VERSION.RELEASE));
+            nameValuePairs.add(new BasicNameValuePair("device_identifier",
+                    Settings.Secure.getString(applicationContext.getContentResolver(), Settings.Secure.ANDROID_ID)));
+            nameValuePairs.add(new BasicNameValuePair("device_platform", "android"));
+            if (userIdentifier != null) {
+                nameValuePairs.add(new BasicNameValuePair("user_identifier", userIdentifier));
+            }
+
+            String version;
+            try {
+                version = applicationContext.getPackageManager().getPackageInfo(applicationContext.getPackageName(), 0).versionName;
+            } catch (PackageManager.NameNotFoundException e) {
+                version = "unknown";
+            }
+            nameValuePairs.add(new BasicNameValuePair("app_version", version));
+            httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+            HttpResponse response = httpclient.execute(httppost);
+        } catch (ClientProtocolException e) {
+            // TODO Auto-generated catch block
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            Log.w(TAG, "Unable to unregister from cloud five: " + e.getMessage());
             e.printStackTrace();
 
         }
