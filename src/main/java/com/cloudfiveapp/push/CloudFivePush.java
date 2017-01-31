@@ -1,9 +1,17 @@
 package com.cloudfiveapp.push;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.AsyncTask;
+import android.provider.Settings;
+import android.util.Log;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -13,35 +21,34 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
 
-import android.app.Application;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.res.XmlResourceParser;
-import android.os.AsyncTask;
-import android.provider.Settings;
-import android.util.Log;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.gcm.GoogleCloudMessaging;
-
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author bsamson
  */
 
-public  class CloudFivePush  {
+public class CloudFivePush {
     public static final String TAG = "CloudFivePush";
     public static final String EXTRA_PUSH_BUNDLE = "pushBundle";
 
+    private static final String PROPERTY_REG_ID = "registration_id";
+    private static final String PROPERTY_APP_VERSION = "app_version_code";
+    private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+
     private static CloudFivePush instance;
+    private Context applicationContext;
+    private String userIdentifier;
+    private GoogleCloudMessaging gcm;
+    private String registrationId;
+    private String gcmSenderId;
+    private PushMessageReceiver pushMessageReceiver;
+    private Boolean handleNotifications = true;
+
     private CloudFivePush() {}
+
     public static CloudFivePush getInstance() {
         if (instance == null) {
             throw new RuntimeException("Please call CloudFivePush.configure first");
@@ -57,11 +64,10 @@ public  class CloudFivePush  {
      * Configure Cloud Five Push. This should be called from your Application's or Activity's onCreate method
      * <p>
      *
-     * @param context The application context of this application
-     * @param gcmSenderId The GCM Sender ID - This is the "Project Number" found on the google api
-     *                    console (https://console.developers.google.com)
+     * @param context             The application context of this application
+     * @param gcmSenderId         The GCM Sender ID - This is the "Project Number" found on the google api
+     *                            console (https://console.developers.google.com)
      * @param pushMessageReceiver A PushMessageReceiver that will handle push notifications.
-     *
      */
     public static void configure(Context context, String gcmSenderId, PushMessageReceiver pushMessageReceiver) {
         instance = new CloudFivePush();
@@ -70,51 +76,68 @@ public  class CloudFivePush  {
         instance.pushMessageReceiver = pushMessageReceiver;
     }
 
+    /**
+     * Configure Cloud Five Push. This should be called from your Application's or Activity's onCreate method
+     * <p>
+     *
+     * @param context             The application context of this application
+     * @param gcmSenderId         The GCM Sender ID - This is the "Project Number" found on the google api
+     *                            console (https://console.developers.google.com)
+     */
     public static void configure(Context context, String gcmSenderId) {
         configure(context, gcmSenderId, null);
     }
 
     /**
-     * Disable the default notification handling behavior.  This will suppress the Notification, alerts, etc.
-     * If you disable the default handlers, be sure to provide a PushMessageReciever to {@code configure}
-     * or your app will ignore push notifications.
-     *
-     */
-    public static void disableDefaultNotificationHandler() {
-        getInstance().handleNotifications = false;
-    }
-
-    /**
      * Enable the default notification handling behavior.  This is enabled by default unless explicitly
      * disabled via {@code disableDefaultNotificationHandler()}
-     *
      */
     public static void enableDefaultNotificationHandler() {
         getInstance().handleNotifications = true;
     }
 
     /**
-     *  Register with Google Cloud Messaging in order to receive push notifications
-     *  It is not necessary to call this method if you only send broadcast notifications
-     *  to all users of this app, only if you wish to target individual users.
+     * Disable the default notification handling behavior.  This will suppress the Notification, alerts, etc.
+     * If you disable the default handlers, be sure to provide a PushMessageReciever to {@code configure}
+     * or your app will ignore push notifications.
+     */
+    public static void disableDefaultNotificationHandler() {
+        getInstance().handleNotifications = false;
+    }
+
+    /**
+     * Register with Google Cloud Messaging in order to receive push notifications
+     * It is not necessary to call this method if you only send broadcast notifications
+     * to all users of this app, only if you wish to target individual users.
      *
-     *  @param userIdentifier A unique identifier for the user using the app so you can target
-     *                        push notification to this user only.
+     * @param userIdentifier A unique identifier for the user using the app so you can target
+     *                       push notification to this user only.
      */
     public static void register(String userIdentifier) {
         getInstance().userIdentifier = userIdentifier;
         getInstance().registerForRemoteNotifications();
     }
 
+    /**
+     * Register with Google Cloud Messaging in order to receive push notifications.
+     */
+    public static void register() {
+        register(null);
+    }
+
+    /**
+     * Unregister from CloudFive.
+     *
+     * @param userIdentifier The same unique identifier used to register the user with CloudFive
+     */
     public static void unregister(String userIdentifier) {
         getInstance().userIdentifier = userIdentifier;
         getInstance().unregisterForRemoteNotifications();
     }
 
-    public static void register() {
-        register(null);
-    }
-
+    /**
+     * Unregister from CloudFive.
+     */
     public static void unregister() {
         unregister(null);
     }
@@ -129,60 +152,6 @@ public  class CloudFivePush  {
         return handleNotifications;
     }
 
-    private static final String PROPERTY_REG_ID = "registration_id";
-    private static final String PROPERTY_APP_VERSION = "app_version_code";
-    private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
-
-    private Context applicationContext;
-    private String userIdentifier;
-    private GoogleCloudMessaging gcm;
-    private String registrationId;
-    private String gcmSenderId;
-    private PushMessageReceiver pushMessageReceiver;
-    private Boolean handleNotifications = true;
-
-    private void registerForRemoteNotifications() {
-        if (checkPlayServices()) {
-            gcm = GoogleCloudMessaging.getInstance(applicationContext);
-            registrationId = getRegistrationId();
-
-            if (registrationId.isEmpty()) {
-                registerInBackground();
-            } else {
-                new AsyncTask() {
-                    @Override
-                    protected Object doInBackground(Object[] params) {
-                        notifyCloudFive();
-                        return null;
-                    }
-                }.execute();
-            }
-        } else {
-            Log.w(TAG, "No valid Google Play Services APK found -- push notifications will not be enabled");
-        }
-    }
-
-    private void unregisterForRemoteNotifications() {
-        if (checkPlayServices()) {
-            gcm = GoogleCloudMessaging.getInstance(applicationContext);
-            registrationId = getRegistrationId();
-
-            if (registrationId.isEmpty()) {
-                // registerInBackground();
-            } else {
-                new AsyncTask() {
-                    @Override
-                    protected Object doInBackground(Object[] params) {
-                        unregisterCloudFive();
-                        return null;
-                    }
-                }.execute();
-            }
-        } else {
-            Log.w(TAG, "No valid Google Play Services APK found -- push notifications will not be enabled");
-        }
-    }
-
     /**
      * Check the device to make sure it has the Google Play Services APK. If
      * it doesn't, display a dialog that allows users to download the APK from
@@ -191,11 +160,11 @@ public  class CloudFivePush  {
     private boolean checkPlayServices() {
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(applicationContext);
         if (resultCode != ConnectionResult.SUCCESS) {
-//            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-//                GooglePlayServicesUtil.getErrorDialog(resultCode, applicationContext, PLAY_SERVICES_RESOLUTION_REQUEST).show();
-//            } else {
-//                Log.i(TAG, "This device is not supported.");
-//            }
+            //            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+            //                GooglePlayServicesUtil.getErrorDialog(resultCode, applicationContext, PLAY_SERVICES_RESOLUTION_REQUEST).show();
+            //            } else {
+            //                Log.i(TAG, "This device is not supported.");
+            //            }
             return false;
         }
         return true;
@@ -207,7 +176,7 @@ public  class CloudFivePush  {
      * If result is empty, the app needs to register.
      *
      * @return registration ID, or empty string if there is no existing
-     *         registration ID.
+     * registration ID.
      */
     private String getRegistrationId() {
         final SharedPreferences prefs = getGCMPreferences();
@@ -226,6 +195,20 @@ public  class CloudFivePush  {
             return "";
         }
         return registrationId;
+    }
+
+    /**
+     * Stores the registration ID and app versionCode in the application's
+     * {@code SharedPreferences}.
+     */
+    private void storeRegistrationId() {
+        final SharedPreferences prefs = getGCMPreferences();
+        int appVersion = getAppVersion(applicationContext);
+        Log.i(TAG, "Saving regId on app version " + appVersion);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(PROPERTY_REG_ID, registrationId);
+        editor.putInt(PROPERTY_APP_VERSION, appVersion);
+        editor.apply();
     }
 
     /**
@@ -251,6 +234,31 @@ public  class CloudFivePush  {
         }
     }
 
+    private String getGcmSenderId() {
+        return gcmSenderId;
+    }
+
+    private void registerForRemoteNotifications() {
+        if (checkPlayServices()) {
+            gcm = GoogleCloudMessaging.getInstance(applicationContext);
+            registrationId = getRegistrationId();
+
+            if (registrationId.isEmpty()) {
+                registerInBackground();
+            } else {
+                new AsyncTask() {
+                    @Override
+                    protected Object doInBackground(Object[] params) {
+                        registerCloudFive();
+                        return null;
+                    }
+                }.execute();
+            }
+        } else {
+            Log.w(TAG, "No valid Google Play Services APK found -- push notifications will not be enabled");
+        }
+    }
+
     /**
      * Registers the application with GCM servers asynchronously.
      * <p>
@@ -268,7 +276,7 @@ public  class CloudFivePush  {
                     }
                     registrationId = gcm.register(getGcmSenderId());
                     msg = "Device registered, registration ID=" + registrationId;
-                    notifyCloudFive();
+                    registerCloudFive();
 
                     // Persist the registration ID - no need to register again.
                     storeRegistrationId();
@@ -283,22 +291,7 @@ public  class CloudFivePush  {
         }.execute();
     }
 
-    /**
-     * Stores the registration ID and app versionCode in the application's
-     * {@code SharedPreferences}.
-     *
-     */
-    private void storeRegistrationId() {
-        final SharedPreferences prefs = getGCMPreferences();
-        int appVersion = getAppVersion(applicationContext);
-        Log.i(TAG, "Saving regId on app version " + appVersion);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(PROPERTY_REG_ID, registrationId);
-        editor.putInt(PROPERTY_APP_VERSION, appVersion);
-        editor.commit();
-    }
-
-    private void notifyCloudFive() {
+    private void registerCloudFive() {
         HttpClient httpclient = new DefaultHttpClient();
         Log.i("CloudFivePush", "registering for push notification with registrationId: " + registrationId + " and userIdentifier: " + userIdentifier);
         HttpPost httppost = new HttpPost("https://www.cloudfiveapp.com/push/register");
@@ -308,7 +301,7 @@ public  class CloudFivePush  {
             List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
             //:device_token, :device_model, :device_name, :device_version, :app_version
             nameValuePairs.add(new BasicNameValuePair("device_token", registrationId));
-            nameValuePairs.add(new BasicNameValuePair("package_name", applicationContext.getPackageName() ));
+            nameValuePairs.add(new BasicNameValuePair("package_name", applicationContext.getPackageName()));
             nameValuePairs.add(new BasicNameValuePair("device_model", android.os.Build.MODEL));
             nameValuePairs.add(new BasicNameValuePair("device_name", android.os.Build.DISPLAY));
             nameValuePairs.add(new BasicNameValuePair("device_version", android.os.Build.VERSION.RELEASE));
@@ -328,13 +321,30 @@ public  class CloudFivePush  {
             nameValuePairs.add(new BasicNameValuePair("app_version", version));
             httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
             HttpResponse response = httpclient.execute(httppost);
-        } catch (ClientProtocolException e) {
-            // TODO Auto-generated catch block
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             Log.w(TAG, "Unable to register with cloud five: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
 
+    private void unregisterForRemoteNotifications() {
+        if (checkPlayServices()) {
+            gcm = GoogleCloudMessaging.getInstance(applicationContext);
+            registrationId = getRegistrationId();
+
+            if (registrationId.isEmpty()) {
+                // registerInBackground();
+            } else {
+                new AsyncTask() {
+                    @Override
+                    protected Object doInBackground(Object[] params) {
+                        unregisterCloudFive();
+                        return null;
+                    }
+                }.execute();
+            }
+        } else {
+            Log.w(TAG, "No valid Google Play Services APK found -- push notifications will not be enabled");
         }
     }
 
@@ -348,7 +358,7 @@ public  class CloudFivePush  {
             List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
             //:device_token, :device_model, :device_name, :device_version, :app_version
             nameValuePairs.add(new BasicNameValuePair("device_token", registrationId));
-            nameValuePairs.add(new BasicNameValuePair("package_name", applicationContext.getPackageName() ));
+            nameValuePairs.add(new BasicNameValuePair("package_name", applicationContext.getPackageName()));
             nameValuePairs.add(new BasicNameValuePair("device_model", android.os.Build.MODEL));
             nameValuePairs.add(new BasicNameValuePair("device_name", android.os.Build.DISPLAY));
             nameValuePairs.add(new BasicNameValuePair("device_version", android.os.Build.VERSION.RELEASE));
@@ -368,17 +378,9 @@ public  class CloudFivePush  {
             nameValuePairs.add(new BasicNameValuePair("app_version", version));
             httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
             HttpResponse response = httpclient.execute(httppost);
-        } catch (ClientProtocolException e) {
-            // TODO Auto-generated catch block
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             Log.w(TAG, "Unable to unregister from cloud five: " + e.getMessage());
             e.printStackTrace();
-
         }
-    }
-
-    private String getGcmSenderId() {
-        return gcmSenderId;
     }
 }
