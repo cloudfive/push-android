@@ -8,7 +8,7 @@
 It's easy, just add this dependency to your app's build.gradle:
 
     dependencies {
-        compile 'com.cloudfiveapp:push-android:0.9.5'
+        compile 'com.cloudfiveapp:push-android:0.9.7'
     }
 
 Cloud Five is hosted on the jcenter repository which is included in new android projects by default. You can verify this by looking at your main build.gradle:
@@ -30,7 +30,7 @@ You can download the AAR file from [the bintray project page](https://bintray.co
 
 Or download the AAR file directly:
 
-[Latest build (0.9.5)](https://bintray.com/artifact/download/cloudfive/maven/com/cloudfiveapp/push-android/0.9.5/push-android-0.9.5.aar)
+[Latest build (0.9.7)](https://bintray.com/artifact/download/cloudfive/maven/com/cloudfiveapp/push-android/0.9.7/push-android-0.9.7.aar)
 
 ## Configuration
 
