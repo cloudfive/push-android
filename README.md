@@ -54,6 +54,41 @@ Then, register to receive push notifications:
 
 That's it!  Now you can send basic push notifications which will create a notification icon in the title bar and launch your app and optionally show an alert dialog when tapped.
 
+## Default Behavior
+The default push handling behavior is quite naive, but often sufficient for barebones functionality.  The behavior depends on the different keys sent from the server.
+
+### alert
+If the `alert` key is present, CloudFive will display a notification in the titlebar with the app's default logo, and when the notification is tapped it simply launched the app.
+
+### message
+The `message` key is meant for sending longer text. if this key is present, we display a popup alert that shows the full text.
+
+### data
+The `data` key is ignored by default and requires advanced implementation (see below)
+
 ## Advanced Configuration
 
-* coming soon
+We launch a background service called GCMIntentService that handles incoming push notifications.
+
+To handle custom data or behavior, simply implement the interface `com.cloudfiveapp.push.PushMessageReceiver` which has one method that receives an intent.
+
+    public void onPushMessageReceived(Intent intent) {
+        Bundle extras = intent.getExtras();
+        // { alert: "Alert text", message: "Message body", data: {} }
+    }
+
+The parameters passed through the API appear in the `extras` of the `Intent`.
+
+Note that is the `alert` and `message` keys are present, cloud five will still create the notification and popup.  To display this behavior, simply call:
+
+    CloudFivePush.disableDefaultNotificationHandler();
+
+after your initialization code.
+
+## Contributing
+
+We welcome pull requests or issues if you have questions.
+
+### Publishing a new version
+
+Make sure you update the version number in the gradle config, get the correct access keys to bintray and run gradle bintrayUpload
