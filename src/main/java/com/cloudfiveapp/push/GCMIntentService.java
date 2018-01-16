@@ -1,6 +1,5 @@
 package com.cloudfiveapp.push;
 
-import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -10,19 +9,32 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.google.android.gms.gcm.GcmListenerService;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
-public class GCMIntentService extends IntentService {
+public class GCMIntentService extends GcmListenerService {
 
     public static final int NOTIFICATION_ID = 415;
     private static final String TAG = "GCMIntentService";
 
-    public GCMIntentService() {
-        super("GCMIntentService");
+    public static void cancelNotification(Context context) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(getAppName(context), NOTIFICATION_ID);
     }
 
-    protected void onHandleIntent(Intent intent) {
-        // Pass the intent to any custom handlers registered
+    public static String getAppName(Context context) {
+        return context.getPackageManager()
+                .getApplicationLabel(context.getApplicationInfo())
+                .toString();
+    }
+
+    @Override
+    public void onMessageReceived(String s, Bundle bundle) {
+        super.onMessageReceived(s, bundle);
+
+        Intent intent = new Intent("Message");
+        intent.putExtras(bundle);
+
         CloudFivePush.getInstance().onPushNotificationReceived(intent);
 
         if (CloudFivePush.getInstance().handleNotifications()) {
@@ -37,14 +49,10 @@ public class GCMIntentService extends IntentService {
                 }
             }
         }
-
-        // Release the wake lock provided by the WakefulBroadcastReceiver.
-        BroadcastReceiver.completeWakefulIntent(intent);
     }
 
-    public void createNotification(Bundle extras)
-    {
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    public void createNotification(Bundle extras) {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         String appName = getAppName(this);
 
         Intent notificationIntent = new Intent(this, PushHandlerActivity.class);
@@ -60,14 +68,14 @@ public class GCMIntentService extends IntentService {
         }
         if (message == null) {
             message = alert;
-            alert = GCMIntentService.getAppName(this);
+            alert = getAppName(this);
         }
 
         if (alert == null) {
-           alert = GCMIntentService.getAppName(this);
+            alert = getAppName(this);
         }
 
-        NotificationCompat.Builder mBuilder =
+        NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this)
                         .setDefaults(Notification.DEFAULT_ALL)
                         .setSmallIcon(this.getApplicationInfo().icon)
@@ -76,31 +84,13 @@ public class GCMIntentService extends IntentService {
                         .setTicker(alert)
                         .setContentIntent(contentIntent);
 
-        mBuilder.setContentText(message);
+        builder.setContentText(message);
 
         String msgcnt = extras.getString("msgcnt");
         if (msgcnt != null) {
-            mBuilder.setNumber(Integer.parseInt(msgcnt));
+            builder.setNumber(Integer.parseInt(msgcnt));
         }
 
-        mNotificationManager.notify(appName, NOTIFICATION_ID, mBuilder.build());
+        notificationManager.notify(appName, NOTIFICATION_ID, builder.build());
     }
-
-    public static void cancelNotification(Context context)
-    {
-        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.cancel(getAppName(context), NOTIFICATION_ID);
-    }
-
-    private static String getAppName(Context context)
-    {
-        CharSequence appName =
-                context
-                        .getPackageManager()
-                        .getApplicationLabel(context.getApplicationInfo());
-
-        return (String)appName;
-    }
-
-
 }

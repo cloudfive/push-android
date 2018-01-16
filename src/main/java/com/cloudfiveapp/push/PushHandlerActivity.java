@@ -9,8 +9,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.util.Log;
 
-public class PushHandlerActivity extends Activity
-{
+public class PushHandlerActivity extends Activity {
     private static String TAG = "PushHandlerActivity";
 
     /*
@@ -20,8 +19,7 @@ public class PushHandlerActivity extends Activity
      * @see android.app.Activity#onCreate(android.os.Bundle)
      */
     @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.v(TAG, "onCreate");
         GCMIntentService.cancelNotification(this);
@@ -33,15 +31,6 @@ public class PushHandlerActivity extends Activity
             transitionToLaunchActivity(pushBundle);
         }
     }
-
-    private void transitionToLaunchActivity(Bundle pushBundle) {
-        PackageManager pm = getPackageManager();
-        Intent launchActivityIntent = pm.getLaunchIntentForPackage(this.getPackageName());
-        launchActivityIntent.putExtra(CloudFivePush.EXTRA_PUSH_BUNDLE, pushBundle);
-        startActivity(launchActivityIntent);
-        finish();
-    }
-
 
     public void showPushAlert(final Bundle pushBundle) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -58,17 +47,24 @@ public class PushHandlerActivity extends Activity
             }
         }
         builder.setMessage(message)
-            .setTitle(title)
-            .setPositiveButton("Details", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                    transitionToLaunchActivity(pushBundle);
-                }
-            });
+                .setTitle(title)
+                .setPositiveButton("Details", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        transitionToLaunchActivity(pushBundle);
+                    }
+                });
 
         AlertDialog dialog = builder.create();
         dialog.show();
     }
 
+    private void transitionToLaunchActivity(Bundle pushBundle) {
+        PackageManager pm = getPackageManager();
+        Intent launchActivityIntent = pm.getLaunchIntentForPackage(this.getPackageName());
+        launchActivityIntent.putExtra(CloudFivePush.EXTRA_PUSH_BUNDLE, pushBundle);
+        startActivity(launchActivityIntent);
+        finish();
+    }
 }
