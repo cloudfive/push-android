@@ -24,6 +24,24 @@ You also need to add a custom GCM permission to your app's AndroidManifest.xml. 
     <permission android:name="${applicationId}.permission.C2D_MESSAGE" android:protectionLevel="signature" />
     <uses-permission android:name="${applicationId}.permission.C2D_MESSAGE" />
 
+### Maven Local
+
+You can build push-android into a local Maven repository by running
+
+    ./gradlew clean build publishToMavenLocal
+
+This will output an `aar` file to `$HOME/.m2/repository/` which can be compiled into an app by adding the `mavenLocal()` repo:
+
+    allprojects {
+        repositories {
+            mavenLocal()
+        }
+    }
+
+Then, append `'@aar'` to the dependency:
+
+    implementation 'com.cloudfiveapp:push-android:0.10.0@aar'
+
 ### Ant/Other builds
 
 You can download the AAR file from [the bintray project page](https://bintray.com/cloudfive/maven/push-android/)

@@ -1,26 +1,45 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.cloudfiveapp.push">
 
-    <uses-sdk android:minSdkVersion="11" />
-
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 
     <application>
-        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
         <receiver
-            android:name="com.cloudfiveapp.push.BroadcastReceiver"
-            android:permission="com.google.android.c2dm.permission.SEND" >
+            android:name="com.google.android.gms.gcm.GcmReceiver"
+            android:exported="true"
+            android:permission="com.google.android.c2dm.permission.SEND">
+
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
                 <category android:name="${applicationId}" />
+
+                <!--TODO: do i need this?-->
+                <!--https://developers.google.com/cloud-messaging/android/client-->
+                <!--<action android:name="com.google.android.c2dm.intent.REGISTRATION" />-->
             </intent-filter>
+
         </receiver>
 
         <activity android:name="com.cloudfiveapp.push.PushHandlerActivity" />
-        <service android:name="com.cloudfiveapp.push.GCMIntentService" />
+
+        <service
+            android:name="com.cloudfiveapp.push.GCMIntentService"
+            android:exported="false">
+
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+            </intent-filter>
+
+        </service>
+
     </application>
 
 </manifest>
