@@ -3,6 +3,7 @@ local.properties
 /.gradle
 .idea/workspace.xml
 .idea/libraries
+.idea/caches/
 *.iml
 
 .DS_Store
