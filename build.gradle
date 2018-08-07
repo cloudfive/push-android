@@ -1,4 +1,6 @@
 buildscript {
+    ext.kotlin_version = '1.2.50'
+
     repositories {
         jcenter()
         mavenCentral()
@@ -12,16 +14,26 @@ buildscript {
         classpath 'com.android.tools.build:gradle:3.3.1'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+
+        classpath 'com.google.gms:google-services:4.0.0'
     }
 }
 
+repositories {
+    jcenter()
+    google()
+}
+
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
 apply plugin: 'maven-publish'
 
-version = "0.11.0"
+version = "1.0.0"
 
 // For publishing to a local Maven repository for testing
 // Add the following repo to the app you want to
@@ -42,20 +54,25 @@ publishing {
     }
 }
 
+if (file('my.gradle').exists()) {
+    apply from: 'my.gradle'
+}
+
 android {
-    compileSdkVersion 26
+    compileSdkVersion 27
     // Ideally, we would re-write CloudFivePush to use a newer HTTP library.
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 26
+        targetSdkVersion 27
         versionCode 1
         versionName version
         if (!project.hasProperty("cloudfivedev")) {
             ext.cloudfivedev = "false"
         }
         buildConfigField "boolean", "CLOUDFIVE_DEV", ext.cloudfivedev
+        buildConfigField 'String', 'BASE_ENDPOINT', '"https://www.cloudfiveapp.com"'
     }
 
     buildTypes {
@@ -71,15 +88,15 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    compileOnly 'com.android.support:support-v4:26.1.0'
-    compileOnly 'com.android.support:appcompat-v7:26.1.0'
-    implementation 'com.google.android.gms:play-services-gcm:+'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    implementation "com.google.firebase:firebase-core:16.0.1"
+    implementation "com.google.firebase:firebase-messaging:17.1.0"
 }
 
-def siteUrl = 'https://github.com/cloudfive/push-android'      // Homepage URL of the library
-def gitUrl = 'https://github.com/cloudfive/push-android.git'   // Git repository URL
-group = "com.cloudfiveapp"                                // Maven Group ID for the artifact
+def siteUrl = 'https://github.com/cloudfive/push-android' // Homepage URL of the library
+def gitUrl = 'https://github.com/cloudfive/push-android.git' // Git repository URL
+group = "com.cloudfiveapp" // Maven Group ID for the artifact
 
 install {
     repositories.mavenInstaller {
@@ -125,6 +142,7 @@ task sourcesJar(type: Jar) {
 }
 
 task javadoc(type: Javadoc) {
+    excludes = ['**/*.kt']
     source = android.sourceSets.main.java.srcDirs
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
 }

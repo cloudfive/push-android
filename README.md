@@ -86,7 +86,7 @@ The `data` key is ignored by default and requires advanced implementation (see b
 
 ## Advanced Configuration
 
-We launch a background service called GCMIntentService that handles incoming push notifications.
+We launch a background service called FCMIntentService that handles incoming push notifications.
 
 To handle custom data or behavior, simply implement the interface `com.cloudfiveapp.push.PushMessageReceiver` which has one method that receives an intent.
 
