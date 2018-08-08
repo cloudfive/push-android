@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import java.util.*
 
-class SharedPrefs(context: Context) {
+internal class SharedPrefs(context: Context) {
 
     companion object {
         private const val SHARED_PREFS_NAME_SUFFIX = "-CloudFivePush"

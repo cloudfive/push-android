@@ -15,9 +15,12 @@ import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.message.BasicNameValuePair
 import java.io.IOException
 
+/**
+ * Receive push notifications from Cloud Five.
+ */
 class CloudFivePush
 private constructor(private val applicationContext: Context,
-                    private val gcmSenderId: String,
+                    private val senderId: String,
                     private val pushMessageReceiver: PushMessageReceiver) {
 
     companion object {
@@ -32,30 +35,44 @@ private constructor(private val applicationContext: Context,
         @Volatile
         private var instance: CloudFivePush? = null
 
-        @Suppress("unused") // Api
+        /**
+         * Configure CloudFivePush. This should be called from your Application's onCreate method.
+         *
+         * @param context your application's context
+         * @param senderId the Sender ID found in the Firebase console
+         * @param pushMessageReceiver a [PushMessageReceiver] that will handle push notifications
+         */
+        @Suppress("unused", "MemberVisibilityCanBePrivate") // Api
         @JvmStatic
-        fun isConfigured(): Boolean {
-            return instance != null
-        }
-
-        @Suppress("unused") // Api
-        @JvmStatic
-        fun configure(context: Context, gcmSenderId: String, pushMessageReceiver: PushMessageReceiver) {
+        fun configure(context: Context, senderId: String, pushMessageReceiver: PushMessageReceiver) {
             synchronized(this) {
-                instance = CloudFivePush(context.applicationContext, gcmSenderId, pushMessageReceiver)
+                instance = CloudFivePush(context.applicationContext, senderId, pushMessageReceiver)
             }
         }
 
-        @Suppress("unused") // Api
+        /**
+         * Register this device with Cloud Five to receive push notifications.
+         *
+         * @param userIdentifier a unique identifier for the current user. this is not necessary
+         * if you only send broadcast notifications
+         */
+        @Suppress("unused", "MemberVisibilityCanBePrivate") // Api
         @JvmStatic
-        fun register(userIdentifier: String) {
+        @JvmOverloads
+        fun register(userIdentifier: String? = null) {
             instance?.registerInBackground(userIdentifier)
                     ?: throw IllegalStateException("CloudFivePush has not been configured yet.")
         }
 
-        @Suppress("unused") // Api
+        /**
+         * Unregister this device from Cloud Five push notifications.
+         *
+         * @param userIdentifier the unique identifier used to [register] the current user
+         */
+        @Suppress("unused", "MemberVisibilityCanBePrivate") // Api
         @JvmStatic
-        fun unregister(userIdentifier: String?) {
+        @JvmOverloads
+        fun unregister(userIdentifier: String? = null) {
             instance?.unregisterInBackground(userIdentifier)
                     ?: throw IllegalStateException("CloudFivePush has not been configured yet.")
         }
@@ -92,7 +109,7 @@ private constructor(private val applicationContext: Context,
                                          val userIdentifier: String?)
         : AsyncTask<Unit, Unit, Unit>() {
 
-        private val gcmSenderId = cloudFivePush.gcmSenderId
+        private val senderId = cloudFivePush.senderId
         private val deviceIdentifier = cloudFivePush.deviceIdentifier
         private val packageName = cloudFivePush.packageName
         private val appVersion = cloudFivePush.appVersion
@@ -119,7 +136,7 @@ private constructor(private val applicationContext: Context,
         protected fun getRegistrationId(): String {
             // Must not be run on main thread
             return _registrationId
-                    ?: FirebaseInstanceId.getInstance().getToken(gcmSenderId, "FCM").also {
+                    ?: FirebaseInstanceId.getInstance().getToken(senderId, "FCM").also {
                         _registrationId = it
                     }
         }
