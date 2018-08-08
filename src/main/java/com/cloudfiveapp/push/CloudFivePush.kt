@@ -7,6 +7,8 @@ import android.content.pm.PackageManager
 import android.os.AsyncTask
 import android.support.annotation.WorkerThread
 import android.util.Log
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.iid.FirebaseInstanceId
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -109,12 +111,21 @@ private constructor(private val applicationContext: Context,
     }
 
     private fun registerInBackground() {
-        RegistrationAsyncTask(this, userIdentifier).execute()
+        if (isGooglePlayServicesAvailable()) {
+            RegistrationAsyncTask(this, userIdentifier).execute()
+        } else {
+            Log.i(TAG, "CloudFivePush not registering because Google Play Services is unavailable.")
+        }
     }
 
     private fun unregisterInBackground(userIdentifier: String?) {
         this.userIdentifier = null
         UnregistrationAsyncTask(this, userIdentifier).execute()
+    }
+
+    private fun isGooglePlayServicesAvailable(): Boolean {
+        return GoogleApiAvailability.getInstance()
+                .isGooglePlayServicesAvailable(applicationContext) == ConnectionResult.SUCCESS
     }
 
     private abstract class BaseAsyncTask(cloudFivePush: CloudFivePush,
