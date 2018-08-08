@@ -7,6 +7,11 @@ import com.google.firebase.messaging.RemoteMessage
 
 class FCMIntentService : FirebaseMessagingService() {
 
+    override fun onNewToken(token: String) {
+        super.onNewToken(token)
+        CloudFivePush.onNewToken()
+    }
+
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 

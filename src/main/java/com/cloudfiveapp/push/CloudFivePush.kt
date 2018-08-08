@@ -77,6 +77,10 @@ private constructor(private val applicationContext: Context,
                     ?: throw IllegalStateException("CloudFivePush has not been configured yet.")
         }
 
+        internal fun onNewToken() {
+            instance?.registerInBackground()
+        }
+
         internal fun onPushNotificationReceived(intent: Intent) {
             instance?.pushMessageReceiver?.onPushMessageReceived(intent)
         }
@@ -97,11 +101,19 @@ private constructor(private val applicationContext: Context,
         "unknown"
     }
 
+    private var userIdentifier: String? = null
+
     private fun registerInBackground(userIdentifier: String?) {
+        this.userIdentifier = userIdentifier
+        registerInBackground()
+    }
+
+    private fun registerInBackground() {
         RegistrationAsyncTask(this, userIdentifier).execute()
     }
 
     private fun unregisterInBackground(userIdentifier: String?) {
+        this.userIdentifier = null
         UnregistrationAsyncTask(this, userIdentifier).execute()
     }
 
