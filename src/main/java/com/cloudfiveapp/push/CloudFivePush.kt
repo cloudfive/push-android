@@ -52,6 +52,10 @@ private constructor(private val applicationContext: Context,
             }
         }
 
+        fun isConfigured(): Boolean {
+            return instance != null
+        }
+
         /**
          * Register this device with Cloud Five to receive push notifications.
          *
