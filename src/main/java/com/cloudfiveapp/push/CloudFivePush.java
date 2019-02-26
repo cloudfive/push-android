@@ -215,7 +215,13 @@ public class CloudFivePush {
     private void registerCloudFive() {
         HttpClient httpclient = new DefaultHttpClient();
         Log.i("CloudFivePush", "registering for push notification with registrationId: " + registrationId + " and userIdentifier: " + userIdentifier);
-        HttpPost httppost = new HttpPost("https://www.cloudfiveapp.com/push/register");
+        HttpPost httppost = null;
+
+        if (BuildConfig.CLOUDFIVE_DEV) {
+            httppost = new HttpPost("https://cloudfive.10fw.net/push/register");
+        } else {
+            httppost = new HttpPost("https://www.cloudfiveapp.com/push/register");
+        }
 
         try {
             // Add your data
@@ -330,7 +336,13 @@ public class CloudFivePush {
     private void unregisterCloudFive() {
         HttpClient httpclient = new DefaultHttpClient();
         Log.i("CloudFivePush", "unregistering for push notification with registrationId: " + registrationId + " and userIdentifier: " + userIdentifier);
-        HttpPost httppost = new HttpPost("https://www.cloudfiveapp.com/push/unregister");
+        HttpPost httppost = null;
+
+        if (BuildConfig.CLOUDFIVE_DEV) {
+            httppost = new HttpPost("https://cloudfive.10fw.net/push/unregister");
+        } else {
+            httppost = new HttpPost("https://www.cloudfiveapp.com/push/unregister");
+        }
 
         try {
             // Add your data
