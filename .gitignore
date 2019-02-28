@@ -6,4 +6,6 @@ local.properties
 .idea/caches/
 *.iml
 
+my.gradle
+
 .DS_Store
