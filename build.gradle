@@ -69,15 +69,7 @@ android {
         targetSdkVersion 27
         versionCode 1
         versionName version
-        if (!project.hasProperty("cloudfivedev")) {
-            ext.cloudfivedev = "false"
-        }
-        buildConfigField "boolean", "CLOUDFIVE_DEV", ext.cloudfivedev
-        if (ext.cloudfivedev) {
-            buildConfigField 'String', 'BASE_ENDPOINT', '"https://cloudfive.10fw.net"'
-        } else {
-            buildConfigField 'String', 'BASE_ENDPOINT', '"https://www.cloudfiveapp.com"'
-        }
+
     }
 
     buildTypes {

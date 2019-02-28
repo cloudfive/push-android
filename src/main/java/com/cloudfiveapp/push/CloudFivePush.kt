@@ -23,14 +23,12 @@ import java.io.IOException
 class CloudFivePush
 private constructor(private val applicationContext: Context,
                     private val senderId: String,
-                    private val pushMessageReceiver: PushMessageReceiver) {
+                    private val pushMessageReceiver: PushMessageReceiver,
+                    private val devMode: Boolean) {
 
     companion object {
 
         private const val TAG = "CloudFivePush"
-
-        private const val REGISTER_ENDPOINT = "${BuildConfig.BASE_ENDPOINT}/push/register"
-        private const val UNREGISTER_ENDPOINT = "${BuildConfig.BASE_ENDPOINT}/push/unregister"
 
         // We only keep an applicationContext, so this is fine
         @SuppressLint("StaticFieldLeak")
@@ -43,12 +41,14 @@ private constructor(private val applicationContext: Context,
          * @param context your application's context
          * @param senderId the Sender ID found in the Firebase console
          * @param pushMessageReceiver a [PushMessageReceiver] that will handle push notifications
+         * @param devMode sets up push registration to go through CloudFive's dev server
          */
         @Suppress("unused", "MemberVisibilityCanBePrivate") // Api
         @JvmStatic
-        fun configure(context: Context, senderId: String, pushMessageReceiver: PushMessageReceiver) {
+        @JvmOverloads
+        fun configure(context: Context, senderId: String, pushMessageReceiver: PushMessageReceiver, devMode: Boolean = false) {
             synchronized(this) {
-                instance = CloudFivePush(context.applicationContext, senderId, pushMessageReceiver)
+                instance = CloudFivePush(context.applicationContext, senderId, pushMessageReceiver, devMode)
             }
         }
 
@@ -92,6 +92,21 @@ private constructor(private val applicationContext: Context,
         }
     }
 
+    private val baseEndpoint: String
+        get() {
+            return if (devMode) {
+                "https://cloudfive.10fw.net"
+            } else {
+                "https://www.cloudfiveapp.com"
+            }
+        }
+
+    private val registerEndpoint
+        get() = "$baseEndpoint/push/register"
+
+    private val unregisterEndpoint
+        get() = "$baseEndpoint/push/unregister"
+
     private val sharedPrefs: SharedPrefs by lazy {
         SharedPrefs(applicationContext)
     }
@@ -132,7 +147,7 @@ private constructor(private val applicationContext: Context,
                 .isGooglePlayServicesAvailable(applicationContext) == ConnectionResult.SUCCESS
     }
 
-    private abstract class BaseAsyncTask(cloudFivePush: CloudFivePush,
+    private abstract class BaseAsyncTask(val cloudFivePush: CloudFivePush,
                                          val userIdentifier: String?)
         : AsyncTask<Unit, Unit, Unit>() {
 
@@ -176,7 +191,7 @@ private constructor(private val applicationContext: Context,
         override fun doInBackground(vararg params: Unit) {
             val httpClient = DefaultHttpClient()
             Log.i(TAG, "Registering for push notification with registrationId: ${getRegistrationId()} and userIdentifier: $userIdentifier")
-            val httpPost = HttpPost(REGISTER_ENDPOINT)
+            val httpPost = HttpPost(cloudFivePush.registerEndpoint)
             httpPost.entity = getParams()
 
             try {
@@ -195,7 +210,7 @@ private constructor(private val applicationContext: Context,
         override fun doInBackground(vararg params: Unit) {
             val httpClient = DefaultHttpClient()
             Log.i(TAG, "Unregistering for push notification with registrationId: ${getRegistrationId()} and userIdentifier: $userIdentifier")
-            val httpPost = HttpPost(UNREGISTER_ENDPOINT)
+            val httpPost = HttpPost(cloudFivePush.unregisterEndpoint)
             httpPost.entity = getParams()
 
             try {
