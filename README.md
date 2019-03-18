@@ -4,11 +4,10 @@
 
 ### Using Gradle and Android Studio
 
-
 It's easy, just add this dependency to your app's build.gradle:
 
     dependencies {
-        compile 'com.cloudfiveapp:push-android:0.9.8'
+        compile 'com.cloudfiveapp:push-android:1.1.0'
     }
 
 Cloud Five is hosted on the jcenter repository which is included in new android projects by default. You can verify this by looking at your main build.gradle:
@@ -23,32 +22,6 @@ You also need to add a custom GCM permission to your app's AndroidManifest.xml. 
 
     <permission android:name="${applicationId}.permission.C2D_MESSAGE" android:protectionLevel="signature" />
     <uses-permission android:name="${applicationId}.permission.C2D_MESSAGE" />
-
-### Maven Local
-
-You can build push-android into a local Maven repository by running
-
-    ./gradlew clean build publishToMavenLocal
-
-This will output an `aar` file to `$HOME/.m2/repository/` which can be compiled into an app by adding the `mavenLocal()` repo:
-
-    allprojects {
-        repositories {
-            mavenLocal()
-        }
-    }
-
-Then, append `'@aar'` to the dependency:
-
-    implementation 'com.cloudfiveapp:push-android:0.10.0@aar'
-
-### Ant/Other builds
-
-You can download the AAR file from [the bintray project page](https://bintray.com/cloudfive/maven/push-android/)
-
-Or download the AAR file directly:
-
-[Latest build (0.9.8)](https://bintray.com/artifact/download/cloudfive/maven/com/cloudfiveapp/push-android/0.9.8/push-android-0.9.8.aar)
 
 ## Configuration
 
@@ -97,16 +70,42 @@ To handle custom data or behavior, simply implement the interface `com.cloudfive
 
 The parameters passed through the API appear in the `extras` of the `Intent`.
 
-Note that is the `alert` and `message` keys are present, cloud five will still create the notification and popup.  To display this behavior, simply call:
-
-    CloudFivePush.disableDefaultNotificationHandler();
-
-after your initialization code.
-
 ## Contributing
 
 We welcome pull requests or issues if you have questions.
 
 ### Publishing a new version
 
-Make sure you update the version number in the gradle config, get the correct access keys to bintray and run gradle bintrayUpload
+Make sure you update the version number in the gradle config, get the correct access keys to bintray and run:
+
+```sh
+./gradlew bintrayUpload
+```
+
+## Development
+
+### Maven Local
+
+You can build push-android into a local Maven repository by running
+
+    ./gradlew clean build publishToMavenLocal
+
+This will output an `aar` file to `$HOME/.m2/repository/` which can be compiled into an app by adding the `mavenLocal()` repo:
+
+    allprojects {
+        repositories {
+            mavenLocal()
+        }
+    }
+
+Then, append `'@aar'` to the dependency:
+
+    implementation 'com.cloudfiveapp:push-android:1.1.0@aar'
+
+### Ant/Other builds
+
+You can download the AAR file from [the bintray project page](https://bintray.com/cloudfive/maven/push-android/)
+
+Or download the AAR file directly:
+
+[Latest build (1.1.0)](https://bintray.com/artifact/download/cloudfive/maven/com/cloudfiveapp/push-android/1.1.0/push-android-1.1.0.aar)
