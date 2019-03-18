@@ -4,11 +4,10 @@
 
 ### Using Gradle and Android Studio
 
-
 It's easy, just add this dependency to your app's build.gradle:
 
     dependencies {
-        compile 'com.cloudfiveapp:push-android:0.9.8'
+        compile 'com.cloudfiveapp:push-android:1.1.0'
     }
 
 Cloud Five is hosted on the jcenter repository which is included in new android projects by default. You can verify this by looking at your main build.gradle:
