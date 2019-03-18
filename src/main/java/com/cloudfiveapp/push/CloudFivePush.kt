@@ -51,6 +51,22 @@ private constructor(private val applicationContext: Context,
         }
 
         /**
+         * Configure CloudFivePush. This should be called from your Application's onCreate method.
+         *
+         * @param context your application's context
+         * @param senderId the Sender ID found in the Firebase console
+         * @param pushMessageReceiver a [PushMessageReceiver] that will handle push notifications
+         * @param devMode sets up push registration to go through CloudFive's dev server
+         */
+        @Suppress("unused", "MemberVisibilityCanBePrivate") // Api
+        @Deprecated("GCM Sender ID is no longer required", ReplaceWith("CloudFivePush.configure(context, pushMessageReceiver, devMode)", "com.cloudfiveapp.push.CloudFivePush"))
+        @JvmStatic
+        @JvmOverloads
+        fun configure(context: Context, senderId: String, pushMessageReceiver: PushMessageReceiver, devMode: Boolean = false) {
+            configure(context, pushMessageReceiver, devMode)
+        }
+
+        /**
          * Returns true if [CloudFivePush.configure] has been called already.
          */
         @Suppress("unused") // Api
