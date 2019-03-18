@@ -9,7 +9,7 @@ class FCMIntentService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        CloudFivePush.onNewToken()
+        CloudFivePush.onNewToken(token)
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {

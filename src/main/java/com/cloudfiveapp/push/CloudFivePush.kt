@@ -5,10 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.AsyncTask
-import android.support.annotation.WorkerThread
 import android.util.Log
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.iid.FirebaseInstanceId
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -22,7 +22,6 @@ import java.io.IOException
  */
 class CloudFivePush
 private constructor(private val applicationContext: Context,
-                    private val senderId: String,
                     private val pushMessageReceiver: PushMessageReceiver,
                     private val devMode: Boolean) {
 
@@ -39,16 +38,15 @@ private constructor(private val applicationContext: Context,
          * Configure CloudFivePush. This should be called from your Application's onCreate method.
          *
          * @param context your application's context
-         * @param senderId the Sender ID found in the Firebase console
          * @param pushMessageReceiver a [PushMessageReceiver] that will handle push notifications
          * @param devMode sets up push registration to go through CloudFive's dev server
          */
         @Suppress("unused", "MemberVisibilityCanBePrivate") // Api
         @JvmStatic
         @JvmOverloads
-        fun configure(context: Context, senderId: String, pushMessageReceiver: PushMessageReceiver, devMode: Boolean = false) {
+        fun configure(context: Context, pushMessageReceiver: PushMessageReceiver, devMode: Boolean = false) {
             synchronized(this) {
-                instance = CloudFivePush(context.applicationContext, senderId, pushMessageReceiver, devMode)
+                instance = CloudFivePush(context.applicationContext, pushMessageReceiver, devMode)
             }
         }
 
@@ -83,8 +81,8 @@ private constructor(private val applicationContext: Context,
                     ?: throw IllegalStateException("CloudFivePush has not been configured yet.")
         }
 
-        internal fun onNewToken() {
-            instance?.registerInBackground()
+        internal fun onNewToken(token: String) {
+            instance?.startRegistrationTask(token)
         }
 
         internal fun onPushNotificationReceived(intent: Intent) {
@@ -126,12 +124,25 @@ private constructor(private val applicationContext: Context,
 
     private fun registerInBackground(userIdentifier: String?) {
         this.userIdentifier = userIdentifier
-        registerInBackground()
+
+        FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener(OnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w(TAG, "getInstanceId failed", task.exception)
+                return@OnCompleteListener
+            }
+
+            val token = task.result?.token
+            if (token == null) {
+                Log.w(TAG, "getInstanceId succeeded, but token was null")
+                return@OnCompleteListener
+            }
+            startRegistrationTask(token)
+        })
     }
 
-    private fun registerInBackground() {
+    private fun startRegistrationTask(registrationId: String) {
         if (isGooglePlayServicesAvailable()) {
-            RegistrationAsyncTask(this, userIdentifier).execute()
+            RegistrationAsyncTask(this, userIdentifier, registrationId).execute()
         } else {
             Log.i(TAG, "CloudFivePush not registering because Google Play Services is unavailable.")
         }
@@ -139,7 +150,28 @@ private constructor(private val applicationContext: Context,
 
     private fun unregisterInBackground(userIdentifier: String?) {
         this.userIdentifier = null
-        UnregistrationAsyncTask(this, userIdentifier).execute()
+        FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener(OnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w(TAG, "getInstanceId failed", task.exception)
+                return@OnCompleteListener
+            }
+
+            // Get new Instance ID token
+            val token = task.result?.token
+            if (token == null) {
+                Log.w(TAG, "getInstanceId succeeded, but token was null")
+                return@OnCompleteListener
+            }
+            startUnregistrationTask(userIdentifier, token)
+        })
+    }
+
+    private fun startUnregistrationTask(userIdentifier: String?, registrationId: String) {
+        if (isGooglePlayServicesAvailable()) {
+            UnregistrationAsyncTask(this, userIdentifier, registrationId).execute()
+        } else {
+            Log.i(TAG, "CloudFivePush not registering because Google Play Services is unavailable.")
+        }
     }
 
     private fun isGooglePlayServicesAvailable(): Boolean {
@@ -148,17 +180,17 @@ private constructor(private val applicationContext: Context,
     }
 
     private abstract class BaseAsyncTask(val cloudFivePush: CloudFivePush,
-                                         val userIdentifier: String?)
+                                         val userIdentifier: String?,
+                                         val registrationId: String)
         : AsyncTask<Unit, Unit, Unit>() {
 
-        private val senderId = cloudFivePush.senderId
         private val deviceIdentifier = cloudFivePush.deviceIdentifier
         private val packageName = cloudFivePush.packageName
         private val appVersion = cloudFivePush.appVersion
 
         protected fun getParams(): UrlEncodedFormEntity {
             val nameValuePairs = mutableListOf<NameValuePair>().apply {
-                add(BasicNameValuePair("device_token", getRegistrationId()))
+                add(BasicNameValuePair("device_token", registrationId))
                 add(BasicNameValuePair("package_name", packageName))
                 add(BasicNameValuePair("device_model", android.os.Build.MODEL))
                 add(BasicNameValuePair("device_name", android.os.Build.DISPLAY))
@@ -171,26 +203,17 @@ private constructor(private val applicationContext: Context,
             }
             return UrlEncodedFormEntity(nameValuePairs)
         }
-
-        private var _registrationId: String? = null
-
-        @WorkerThread
-        protected fun getRegistrationId(): String {
-            // Must not be run on main thread
-            return _registrationId
-                    ?: FirebaseInstanceId.getInstance().getToken(senderId, "FCM").also {
-                        _registrationId = it
-                    }
-        }
     }
 
     private class RegistrationAsyncTask(cloudFivePush: CloudFivePush,
-                                        userIdentifier: String?)
-        : BaseAsyncTask(cloudFivePush, userIdentifier) {
+                                        userIdentifier: String?,
+                                        registrationId: String)
+        : BaseAsyncTask(cloudFivePush, userIdentifier, registrationId) {
 
         override fun doInBackground(vararg params: Unit) {
             val httpClient = DefaultHttpClient()
-            Log.i(TAG, "Registering for push notification with registrationId: ${getRegistrationId()} and userIdentifier: $userIdentifier")
+            val inDevMode = if (cloudFivePush.devMode) "in dev mode " else ""
+            Log.i(TAG, "Registering ${inDevMode}for push notification with registrationId: $registrationId and userIdentifier: $userIdentifier")
             val httpPost = HttpPost(cloudFivePush.registerEndpoint)
             httpPost.entity = getParams()
 
@@ -204,12 +227,13 @@ private constructor(private val applicationContext: Context,
     }
 
     private class UnregistrationAsyncTask(cloudFivePush: CloudFivePush,
-                                          userIdentifier: String?)
-        : BaseAsyncTask(cloudFivePush, userIdentifier) {
+                                          userIdentifier: String?,
+                                          registrationId: String)
+        : BaseAsyncTask(cloudFivePush, userIdentifier, registrationId) {
 
         override fun doInBackground(vararg params: Unit) {
             val httpClient = DefaultHttpClient()
-            Log.i(TAG, "Unregistering for push notification with registrationId: ${getRegistrationId()} and userIdentifier: $userIdentifier")
+            Log.i(TAG, "Unregistering for push notification with registrationId: $registrationId and userIdentifier: $userIdentifier")
             val httpPost = HttpPost(cloudFivePush.unregisterEndpoint)
             httpPost.entity = getParams()
 
