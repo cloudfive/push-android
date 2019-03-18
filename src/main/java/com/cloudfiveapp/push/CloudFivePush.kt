@@ -50,6 +50,11 @@ private constructor(private val applicationContext: Context,
             }
         }
 
+        /**
+         * Returns true if [CloudFivePush.configure] has been called already.
+         */
+        @Suppress("unused") // Api
+        @JvmStatic
         fun isConfigured(): Boolean {
             return instance != null
         }
