@@ -48,7 +48,7 @@ Then, register to receive push notifications:
 That's it!  Now you can send basic push notifications which will call
 your implementation of `PushMessageReceiver` detailed below.
 
-## `PushMessageReceiver` Configuration
+### `PushMessageReceiver` Configuration
 
 As part of configuration, you provide an implementation of
 `PushMessageReceiver` that CloudFivePush will call to handle received
@@ -68,6 +68,22 @@ CloudFivePush received.
 Note that `data` is a `String`, but you may pass JSON in there. You can
 then parse that with the built in `org.json.JSONObject` class or other
 JSON parsing libraries.
+
+### Advanced Firebase Configuration
+
+Sometimes it may be useful to have multiple Firebase projects associated
+with your app. If the Firebase project that you want to use for
+Messaging is not your default `FirebaseApp` instance, you can pass the
+instance name into `CloudFivePush.configure` and CloudFivePush will use
+the correct instance when hooking into Firebase Messaging. See this
+[Firebase documentation](https://firebase.google.com/docs/projects/multiprojects)
+for more information about configuring multiple Firebase projects.
+
+```java
+FirebaseApp.initializeApp(this, firebaseOptions, "messaging-instance-name");
+
+CloudFivePush.configure(context, pushMessageReceiver, "messaging-instance-name");
+```
 
 ## Contributing
 
