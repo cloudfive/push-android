@@ -6,69 +6,94 @@
 
 It's easy, just add this dependency to your app's build.gradle:
 
-    dependencies {
-        compile 'com.cloudfiveapp:push-android:1.1.0'
+```groovy
+dependencies {
+    compile 'com.cloudfiveapp:push-android:x.y.z'
+}
+```
+
+The current version can be found
+[here](https://bintray.com/cloudfive/maven/push-android).
+
+Cloud Five is hosted on the jcenter repository which is included in new
+android projects by default. You can verify this by looking at your main
+build.gradle:
+
+```groovy
+allprojects {
+    repositories {
+        jcenter()
     }
-
-Cloud Five is hosted on the jcenter repository which is included in new android projects by default. You can verify this by looking at your main build.gradle:
-
-    allprojects {
-        repositories {
-            jcenter()
-        }
-    }
-
-You also need to add a custom GCM permission to your app's AndroidManifest.xml.  Just copy this directly before the `<application>` tag in your app:
-
-    <permission android:name="${applicationId}.permission.C2D_MESSAGE" android:protectionLevel="signature" />
-    <uses-permission android:name="${applicationId}.permission.C2D_MESSAGE" />
+}
+```
 
 ## Configuration
 
-In either `Application.onCreate` or your launch `Activity.onCreate`, you need to configure Push with your GCM Sender ID (This is the project number found on the [Google API Console](https://console.developers.google.com)
+In either `Application.onCreate` you need to configure `push-android`
+with an instance of a `PushMessageReceiver`.  The class implementing
+this interface will be called whenever `push-android` receives a message.
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        CloudFivePush.configure(this, <your GCM Sender ID>);
-    }
+```java
+@Override
+public void onCreate() {
+    super.onCreate();
+    CloudFivePush.configure(this, pushMessageReceiver);
+}
+```
 
 Then, register to receive push notifications:
 
-    CloudFivePush.register();
+```java
+CloudFivePush.register();
 
-    // If you wish to send targeted notifications to specific users, simply pass in a
-    // unique user identifier:
+// If you wish to send targeted notifications to specific users, simply pass in a
+// unique user identifier:
 
-    CloudFivePush.register('user@example.com');
+CloudFivePush.register('user@example.com');
+```
 
 
-That's it!  Now you can send basic push notifications which will create a notification icon in the title bar and launch your app and optionally show an alert dialog when tapped.
+That's it!  Now you can send basic push notifications which will call
+your implementation of `PushMessageReceiver` detailed below.
 
-## Default Behavior
-The default push handling behavior is quite naive, but often sufficient for barebones functionality.  The behavior depends on the different keys sent from the server.
+### `PushMessageReceiver` Configuration
 
-### alert
-If the `alert` key is present, CloudFive will display a notification in the titlebar with the app's default logo, and when the notification is tapped it simply launched the app.
+As part of configuration, you provide an implementation of
+`PushMessageReceiver` that CloudFivePush will call to handle received
+push notifications. CloudFivePush passes an `Intent` to your
+implementation. The extras in that intent contain the information
+CloudFivePush received.
 
-### message
-The `message` key is meant for sending longer text. if this key is present, we display a popup alert that shows the full text.
-
-### data
-The `data` key is ignored by default and requires advanced implementation (see below)
-
-## Advanced Configuration
-
-We launch a background service called FCMIntentService that handles incoming push notifications.
-
-To handle custom data or behavior, simply implement the interface `com.cloudfiveapp.push.PushMessageReceiver` which has one method that receives an intent.
-
+```java
+public class MyPushReceiver implements PushMessageReceiver
     public void onPushMessageReceived(Intent intent) {
         Bundle extras = intent.getExtras();
-        // { alert: "Alert text", message: "Message body", data: {} }
+        String alert = extras.getString("alert")
+        String message = extras.getString("message")
+        String data = extras.getString("data")
     }
+}
+```
 
-The parameters passed through the API appear in the `extras` of the `Intent`.
+Note that `data` is a `String`, but you may pass JSON in there. You can
+then parse that with the built in `org.json.JSONObject` class or other
+JSON parsing libraries.
+
+### Advanced Firebase Configuration
+
+Sometimes it may be useful to have multiple Firebase projects associated
+with your app. If the Firebase project that you want to use for
+Messaging is not your default `FirebaseApp` instance, you can pass the
+instance name into `CloudFivePush.configure` and CloudFivePush will use
+the correct instance when hooking into Firebase Messaging. See this
+[Firebase documentation](https://firebase.google.com/docs/projects/multiprojects)
+for more information about configuring multiple Firebase projects.
+
+```java
+FirebaseApp.initializeApp(this, firebaseOptions, "messaging-instance-name");
+
+CloudFivePush.configure(context, pushMessageReceiver, "messaging-instance-name");
+```
 
 ## Contributing
 
@@ -76,7 +101,8 @@ We welcome pull requests or issues if you have questions.
 
 ### Publishing a new version
 
-Make sure you update the version number in the gradle config, get the correct access keys to bintray and run:
+Make sure you update the version number in the gradle config, get the
+correct access keys to bintray and run:
 
 ```sh
 ./gradlew bintrayUpload
@@ -86,26 +112,33 @@ Make sure you update the version number in the gradle config, get the correct ac
 
 ### Maven Local
 
-You can build push-android into a local Maven repository by running
+You can build and publish `push-android` to a local Maven repository by
+running:
 
-    ./gradlew clean build publishToMavenLocal
+```sh
+./gradlew clean build publishToMavenLocal
+```
 
-This will output an `aar` file to `$HOME/.m2/repository/` which can be compiled into an app by adding the `mavenLocal()` repo:
+This will output an `aar` file to `$HOME/.m2/repository/` which can be
+compiled into an app by adding the `mavenLocal()` repository as the
+first repository:
 
-    allprojects {
-        repositories {
-            mavenLocal()
-        }
+```groovy
+allprojects {
+    repositories {
+        mavenLocal()
+        // All other repositories ...
     }
+}
+```
 
 Then, append `'@aar'` to the dependency:
 
-    implementation 'com.cloudfiveapp:push-android:1.1.0@aar'
+```groovy
+implementation 'com.cloudfiveapp:push-android:x.y.z@aar'
+```
 
 ### Ant/Other builds
 
-You can download the AAR file from [the bintray project page](https://bintray.com/cloudfive/maven/push-android/)
-
-Or download the AAR file directly:
-
-[Latest build (1.1.0)](https://bintray.com/artifact/download/cloudfive/maven/com/cloudfiveapp/push-android/1.1.0/push-android-1.1.0.aar)
+You can download the AAR file from 
+[the bintray project page](https://bintray.com/cloudfive/maven/push-android/)
