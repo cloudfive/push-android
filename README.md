@@ -13,7 +13,9 @@ It's easy, just add this dependency to your app's build.gradle:
 The current version can be found
 [here](https://bintray.com/cloudfive/maven/push-android).
 
-Cloud Five is hosted on the jcenter repository which is included in new android projects by default. You can verify this by looking at your main build.gradle:
+Cloud Five is hosted on the jcenter repository which is included in new
+android projects by default. You can verify this by looking at your main
+build.gradle:
 
     allprojects {
         repositories {
@@ -73,7 +75,8 @@ We welcome pull requests or issues if you have questions.
 
 ### Publishing a new version
 
-Make sure you update the version number in the gradle config, get the correct access keys to bintray and run:
+Make sure you update the version number in the gradle config, get the
+correct access keys to bintray and run:
 
 ```sh
 ./gradlew bintrayUpload
@@ -83,11 +86,14 @@ Make sure you update the version number in the gradle config, get the correct ac
 
 ### Maven Local
 
-You can build and publish `push-android` to a local Maven repository by running:
+You can build and publish `push-android` to a local Maven repository by
+running:
 
     ./gradlew clean build publishToMavenLocal
 
-This will output an `aar` file to `$HOME/.m2/repository/` which can be compiled into an app by adding the `mavenLocal()` repository as the first repository:
+This will output an `aar` file to `$HOME/.m2/repository/` which can be
+compiled into an app by adding the `mavenLocal()` repository as the
+first repository:
 
     allprojects {
         repositories {
