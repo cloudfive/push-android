@@ -135,7 +135,7 @@ allprojects {
 Then, append `'@aar'` to the dependency:
 
 ```groovy
-implementation 'com.cloudfiveapp:push-android:1.1.0@aar'
+implementation 'com.cloudfiveapp:push-android:x.y.z@aar'
 ```
 
 ### Ant/Other builds
