@@ -90,11 +90,12 @@ You can build push-android into a local Maven repository by running
 
     ./gradlew clean build publishToMavenLocal
 
-This will output an `aar` file to `$HOME/.m2/repository/` which can be compiled into an app by adding the `mavenLocal()` repo:
+This will output an `aar` file to `$HOME/.m2/repository/` which can be compiled into an app by adding the `mavenLocal()` repository as the first repository:
 
     allprojects {
         repositories {
             mavenLocal()
+            // All other repositories ...
         }
     }
 
