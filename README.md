@@ -108,8 +108,5 @@ Then, append `'@aar'` to the dependency:
 
 ### Ant/Other builds
 
-You can download the AAR file from [the bintray project page](https://bintray.com/cloudfive/maven/push-android/)
-
-Or download the AAR file directly:
-
-[Latest build (1.1.0)](https://bintray.com/artifact/download/cloudfive/maven/com/cloudfiveapp/push-android/1.1.0/push-android-1.1.0.aar)
+You can download the AAR file from 
+[the bintray project page](https://bintray.com/cloudfive/maven/push-android/)
