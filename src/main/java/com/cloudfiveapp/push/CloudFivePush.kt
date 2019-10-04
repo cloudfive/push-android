@@ -9,6 +9,7 @@ import android.util.Log
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.FirebaseApp
 import com.google.firebase.iid.FirebaseInstanceId
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -23,6 +24,7 @@ import java.io.IOException
 class CloudFivePush
 private constructor(private val applicationContext: Context,
                     private val pushMessageReceiver: PushMessageReceiver,
+                    private val firebaseAppInstanceName: String?,
                     private val devMode: Boolean) {
 
     companion object {
@@ -39,14 +41,16 @@ private constructor(private val applicationContext: Context,
          *
          * @param context your application's context
          * @param pushMessageReceiver a [PushMessageReceiver] that will handle push notifications
+         * @param firebaseAppInstanceName name of the instance of a [FirebaseApp] to be used for
+         *  messaging; if not provided, the default [FirebaseApp] will be used
          * @param devMode sets up push registration to go through CloudFive's dev server
          */
         @Suppress("unused", "MemberVisibilityCanBePrivate") // Api
         @JvmStatic
         @JvmOverloads
-        fun configure(context: Context, pushMessageReceiver: PushMessageReceiver, devMode: Boolean = false) {
+        fun configure(context: Context, pushMessageReceiver: PushMessageReceiver, firebaseAppInstanceName: String? = null, devMode: Boolean = false) {
             synchronized(this) {
-                instance = CloudFivePush(context.applicationContext, pushMessageReceiver, devMode)
+                instance = CloudFivePush(context.applicationContext, pushMessageReceiver, firebaseAppInstanceName, devMode)
             }
         }
 
@@ -59,11 +63,11 @@ private constructor(private val applicationContext: Context,
          * @param devMode sets up push registration to go through CloudFive's dev server
          */
         @Suppress("unused", "MemberVisibilityCanBePrivate") // Api
-        @Deprecated("GCM Sender ID is no longer required", ReplaceWith("CloudFivePush.configure(context, pushMessageReceiver, devMode)", "com.cloudfiveapp.push.CloudFivePush"))
+        @Deprecated("GCM Sender ID is no longer required", ReplaceWith("CloudFivePush.configure(context, pushMessageReceiver, firebaseAppInstanceName, devMode)", "com.cloudfiveapp.push.CloudFivePush"))
         @JvmStatic
         @JvmOverloads
         fun configure(context: Context, senderId: String, pushMessageReceiver: PushMessageReceiver, devMode: Boolean = false) {
-            configure(context, pushMessageReceiver, devMode)
+            configure(context, pushMessageReceiver, null, devMode)
         }
 
         /**
@@ -141,12 +145,22 @@ private constructor(private val applicationContext: Context,
         "unknown"
     }
 
+    private val firebaseInstanceId: FirebaseInstanceId
+        get() {
+            return if (firebaseAppInstanceName == null) {
+                FirebaseInstanceId.getInstance()
+            } else {
+                val firebaseApp = FirebaseApp.getInstance(firebaseAppInstanceName)
+                FirebaseInstanceId.getInstance(firebaseApp)
+            }
+        }
+
     private var userIdentifier: String? = null
 
     private fun registerInBackground(userIdentifier: String?) {
         this.userIdentifier = userIdentifier
 
-        FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener(OnCompleteListener { task ->
+        firebaseInstanceId.instanceId.addOnCompleteListener(OnCompleteListener { task ->
             if (!task.isSuccessful) {
                 Log.w(TAG, "getInstanceId failed", task.exception)
                 return@OnCompleteListener
@@ -171,7 +185,7 @@ private constructor(private val applicationContext: Context,
 
     private fun unregisterInBackground(userIdentifier: String?) {
         this.userIdentifier = null
-        FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener(OnCompleteListener { task ->
+        firebaseInstanceId.instanceId.addOnCompleteListener(OnCompleteListener { task ->
             if (!task.isSuccessful) {
                 Log.w(TAG, "getInstanceId failed", task.exception)
                 return@OnCompleteListener
