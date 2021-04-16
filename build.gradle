@@ -29,9 +29,6 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'org.jetbrains.dokka'
 
-apply plugin: 'maven'
-apply plugin: 'signing'
-
 if (file('my.gradle').exists()) {
     apply from: 'my.gradle'
 }
@@ -67,91 +64,10 @@ dependencies {
     implementation "com.google.firebase:firebase-messaging:17.1.0"
 }
 
-task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+ext {
+    PUBLISH_GROUP_ID = 'com.cloudfiveapp'
+    PUBLISH_VERSION = '1.2.0'
+    PUBLISH_ARTIFACT_ID = 'push-android'
 }
 
-task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
-    classifier = 'javadoc'
-    from "$buildDir/javadoc"
-}
-
-task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
-    classifier = 'sources'
-}
-
-artifacts {
-    archives javadocJar
-    archives sourcesJar
-}
-
-signing {
-    sign configurations.archives
-}
-
-group = "com.cloudfiveapp" // Maven Group ID for the artifact
-archivesBaseName = "push-android"
-version = "1.2.0"
-
-def siteUrl = 'https://github.com/cloudfive/push-android' // Homepage URL of the library
-
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
-def ossrhUsername = properties.getProperty('ossrhUsername')
-def ossrhPassword = properties.getProperty('ossrhPassword')
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            pom.project {
-                name 'Cloudfive push-android'
-                packaging 'jar'
-                description 'Android client for push notifications from cloudfiveapp.com'
-                url siteUrl
-
-                scm {
-                    connection 'scm:git:https://github.com/cloudfive/push-android.git'
-                    developerConnection 'scm:git:https://github.com/cloudfive/push-android.git'
-                    url 'https://github.com/cloudfive/push-android.git'
-                }
-
-                licenses {
-                    license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'brian'
-                        name 'Brian Samson'
-                        email 'brian@cloudfiveapp.com'
-                    }
-
-                    developer {
-                        id 'brett'
-                        name 'Brett Samson'
-                    }
-
-                    developer {
-                        id 'alex'
-                        name 'Alex Petitjean'
-                    }
-                }
-            }
-        }
-    }
-}
+apply from: "${rootProject.projectDir}/scripts/publish-mavencentral.gradle"
