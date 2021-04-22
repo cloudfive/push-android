@@ -30,55 +30,44 @@ directly before the `<application>` tag in your app:
 
 ## Configuration
 
-In either `Application.onCreate` or your launch `Activity.onCreate`, you need to configure Push with
-your GCM Sender ID (This is the project number found on the
-[Google API Console](https://console.developers.google.com)
+In `Application.onCreate`, you need to configure `CloudFivePush`:
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        CloudFivePush.configure(this, <your GCM Sender ID>);
-    }
+```kotlin
+override fun onCreate() {
+    super.onCreate()
+    val pushMessageReceiver: PushMessageReceiver
+    // Implement your own instance of PushMessageReceiver
+    CloudFivePush.configure(this, pushMessageReceiver)
+}
+```
 
 Then, register to receive push notifications:
 
-    CloudFivePush.register();
+```kotlin
+CloudFivePush.register()
 
-    // If you wish to send targeted notifications to specific users, simply pass in a
-    // unique user identifier:
+// If you wish to send targeted notifications to specific users, simply pass in a
+// unique user identifier:
+CloudFivePush.register('user@example.com')
+```
 
-    CloudFivePush.register('user@example.com');
+That's it! Now you can receive pushes from Cloudfive and handle them in your `PushMessageReceiver`.
 
-
-That's it!  Now you can send basic push notifications which will create a notification icon in the
-title bar and launch your app and optionally show an alert dialog when tapped.
-
-## Default Behavior
-The default push handling behavior is quite naive, but often sufficient for barebones functionality.
-The behavior depends on the different keys sent from the server.
-
-### alert
-If the `alert` key is present, CloudFive will display a notification in the titlebar with the app's
-default logo, and when the notification is tapped it simply launched the app.
-
-### message
-The `message` key is meant for sending longer text. if this key is present, we display a popup alert
-that shows the full text.
-
-### data
-The `data` key is ignored by default and requires advanced implementation (see below)
-
-## Advanced Configuration
+## `PushMessageReceiver` Configuration
 
 We launch a background service called `FCMIntentService` that handles incoming push notifications.
 
 To handle custom data or behavior, simply implement the interface
 `com.cloudfiveapp.push.PushMessageReceiver` which has one method that receives an intent.
 
-    public void onPushMessageReceived(Intent intent) {
-        Bundle extras = intent.getExtras();
-        // { alert: "Alert text", message: "Message body", data: {} }
-    }
+```kotlin
+override fun onPushMessageReceived(intent: Intent) {
+    val alert = intent.extras?.getString("alert")
+    val message = intent.extras?.getString("message")
+    val dataStr = intent.extras?.getString("data")
+    // Create a notification
+}
+```
 
 The parameters passed through the API appear in the `extras` of the `Intent`.
 
