@@ -22,14 +22,17 @@ allprojects {
 }
 ```
 
-You also need to add a custom GCM permission to your app's AndroidManifest.xml.  Just copy this directly before the `<application>` tag in your app:
+You also need to add a custom GCM permission to your app's AndroidManifest.xml.  Just copy this
+directly before the `<application>` tag in your app:
 
     <permission android:name="${applicationId}.permission.C2D_MESSAGE" android:protectionLevel="signature" />
     <uses-permission android:name="${applicationId}.permission.C2D_MESSAGE" />
 
 ## Configuration
 
-In either `Application.onCreate` or your launch `Activity.onCreate`, you need to configure Push with your GCM Sender ID (This is the project number found on the [Google API Console](https://console.developers.google.com)
+In either `Application.onCreate` or your launch `Activity.onCreate`, you need to configure Push with
+your GCM Sender ID (This is the project number found on the
+[Google API Console](https://console.developers.google.com)
 
     @Override
     public void onCreate() {
@@ -47,16 +50,20 @@ Then, register to receive push notifications:
     CloudFivePush.register('user@example.com');
 
 
-That's it!  Now you can send basic push notifications which will create a notification icon in the title bar and launch your app and optionally show an alert dialog when tapped.
+That's it!  Now you can send basic push notifications which will create a notification icon in the
+title bar and launch your app and optionally show an alert dialog when tapped.
 
 ## Default Behavior
-The default push handling behavior is quite naive, but often sufficient for barebones functionality.  The behavior depends on the different keys sent from the server.
+The default push handling behavior is quite naive, but often sufficient for barebones functionality.
+The behavior depends on the different keys sent from the server.
 
 ### alert
-If the `alert` key is present, CloudFive will display a notification in the titlebar with the app's default logo, and when the notification is tapped it simply launched the app.
+If the `alert` key is present, CloudFive will display a notification in the titlebar with the app's
+default logo, and when the notification is tapped it simply launched the app.
 
 ### message
-The `message` key is meant for sending longer text. if this key is present, we display a popup alert that shows the full text.
+The `message` key is meant for sending longer text. if this key is present, we display a popup alert
+that shows the full text.
 
 ### data
 The `data` key is ignored by default and requires advanced implementation (see below)
@@ -65,7 +72,8 @@ The `data` key is ignored by default and requires advanced implementation (see b
 
 We launch a background service called `FCMIntentService` that handles incoming push notifications.
 
-To handle custom data or behavior, simply implement the interface `com.cloudfiveapp.push.PushMessageReceiver` which has one method that receives an intent.
+To handle custom data or behavior, simply implement the interface
+`com.cloudfiveapp.push.PushMessageReceiver` which has one method that receives an intent.
 
     public void onPushMessageReceived(Intent intent) {
         Bundle extras = intent.getExtras();
@@ -113,7 +121,8 @@ You can build push-android into a local Maven repository by running
 
     ./gradlew clean build publishToMavenLocal
 
-This will output an `aar` file to `$HOME/.m2/repository/` which can be compiled into an app by adding the `mavenLocal()` repo:
+This will output an `aar` file to `$HOME/.m2/repository/` which can be compiled into an app by
+adding the `mavenLocal()` repo:
 
     allprojects {
         repositories {
