@@ -63,7 +63,7 @@ The `data` key is ignored by default and requires advanced implementation (see b
 
 ## Advanced Configuration
 
-We launch a background service called FCMIntentService that handles incoming push notifications.
+We launch a background service called `FCMIntentService` that handles incoming push notifications.
 
 To handle custom data or behavior, simply implement the interface `com.cloudfiveapp.push.PushMessageReceiver` which has one method that receives an intent.
 
@@ -78,17 +78,36 @@ The parameters passed through the API appear in the `extras` of the `Intent`.
 
 We welcome pull requests or issues if you have questions.
 
+### Publishing Prerequisites
+
+Get the GPG backup and import it with `gpg --import c5-backup.pgp`.
+
+In `local.properties` in this project, add the following:
+
+```
+signing.gnupg.executable=gpg
+signing.gnupg.keyName=<last 16 digits of the GPG key ID>
+signing.gnupg.passphrase=<get from 1Password>
+
+ossrhUsername=<get from 1Password, "Maven Jira" user>
+ossrhPassword=<get from 1Password, "Maven Jira" user>
+```
+
 ### Publishing a new version
 
-Make sure you update the version number in the gradle config, get the correct access keys to bintray and run:
-
 ```sh
-./gradlew bintrayUpload
+./gradlew clean build publishReleasePublicationToSonatypeRepository
 ```
+
+1. Visit [Nexus Repository Manager](https://s01.oss.sonatype.org/) and sign in as the "10fw" user.
+2. Visit "Staging Repositories" in the left nav bar and you should see the version you just uploaded via Gradle.
+3. Assuming everything worked correctly, "Close" the repository, then "Release" it.
 
 ## Development
 
 ### Maven Local
+
+*This hasn't been tested recently and may or may not work after the migration to Maven Central.*
 
 You can build push-android into a local Maven repository by running
 
@@ -105,11 +124,3 @@ This will output an `aar` file to `$HOME/.m2/repository/` which can be compiled 
 Then, append `'@aar'` to the dependency:
 
     implementation 'com.cloudfiveapp:push-android:1.1.0@aar'
-
-### Ant/Other builds
-
-You can download the AAR file from [the bintray project page](https://bintray.com/cloudfive/maven/push-android/)
-
-Or download the AAR file directly:
-
-[Latest build (1.1.0)](https://bintray.com/artifact/download/cloudfive/maven/com/cloudfiveapp/push-android/1.1.0/push-android-1.1.0.aar)
