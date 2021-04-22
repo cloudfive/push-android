@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- minSdkVersion is now 16
 - Upgrade Kotlin to 1.4.32
 
 ## [1.1.0] - 2019-03-19
