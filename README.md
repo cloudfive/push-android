@@ -6,17 +6,21 @@
 
 It's easy, just add this dependency to your app's build.gradle:
 
-    dependencies {
-        compile 'com.cloudfiveapp:push-android:1.1.0'
-    }
+```groovy
+dependencies {
+    compile 'com.cloudfiveapp:push-android:1.2.0'
+}
+```
 
-Cloud Five is hosted on the jcenter repository which is included in new android projects by default. You can verify this by looking at your main build.gradle:
+Cloud Five is hosted on Maven Central:
 
-    allprojects {
-        repositories {
-            jcenter()
-        }
+```groovy
+allprojects {
+    repositories {
+        mavenCentral()
     }
+}
+```
 
 You also need to add a custom GCM permission to your app's AndroidManifest.xml.  Just copy this directly before the `<application>` tag in your app:
 
