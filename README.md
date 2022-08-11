@@ -8,7 +8,7 @@ It's easy, just add this dependency to your app's build.gradle:
 
 ```groovy
 dependencies {
-    compile 'com.cloudfiveapp:push-android:1.2.0'
+    compile 'com.cloudfiveapp:push-android:1.3.0'
 }
 ```
 

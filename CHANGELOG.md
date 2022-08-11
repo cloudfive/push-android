@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2022-08-11
+
+- Targeting S+ (version 31 and above) requires that an explicit value for android:exported be defined when intent filters are present
+
 ## [1.2.0] - 2021-04-16
 
 - minSdkVersion is now 16
